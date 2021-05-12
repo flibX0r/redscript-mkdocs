@@ -1,0 +1,12 @@
+site_name: redscript-mkdocs
+site_dir: ../site
+theme:
+  name: material
+  language: en
+plugins:
+  - search:
+      prebuild_index: true
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.snippets
