@@ -6,6 +6,7 @@ edition = "2018"
 
 [dependencies]
 redscript = { git = "https://github.com/jac3km4/redscript", branch = "master" }
-gumdrop = "0.8"
+gumdrop = { git = "https://github.com/flibX0r/gumdrop" }
 log = "0.4"
 simplelog = "0.10"
+askama = "0.10"

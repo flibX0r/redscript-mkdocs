@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"rust-analyzer.checkOnSave.enable": true,
+		"rust-analyzer.inlayHints.typeHints": false
+	}
+}
