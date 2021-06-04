@@ -6,6 +6,9 @@
 	],
 	"settings": {
 		"rust-analyzer.checkOnSave.enable": true,
-		"rust-analyzer.inlayHints.typeHints": false
+		"rust-analyzer.inlayHints.typeHints": false,
+		"editor.rulers": [
+			{ "column": 100, "color": "#FFF1" }
+		]
 	}
 }

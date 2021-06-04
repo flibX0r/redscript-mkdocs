@@ -26,9 +26,9 @@ or with no prefix
 */
 ```
 For each line in a comment block, if it starts with:
- - A single space character,
- - Any number of asterisks,
- - At least one space character
+  - Any amount of whitespace,
+  - A single asterisk,
+  - At least one space character
 
 Those characters will be stripped from the comment before being output. For this reason, if you're
 writing an unordered list in your comments and not prefixing each line, you should use hyphen `-` or
@@ -38,8 +38,8 @@ plus `+` prefixed lists
 ```swift
 /// Triple-slash single-line documentation comment
 ```
-For each single-line comment, if there is one or more whitespace characters between the three
-slashes `///` and any number of non-whitespace characters, the first of those whitespace characters
+For each single-line comment, if there is one or more space characters between the three
+slashes `///` and any number of non-space characters, the first of those whitespace characters
 will be trimmed from the output.
 
 ## Supported Block Tags

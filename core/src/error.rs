@@ -5,7 +5,6 @@ use std::fmt;
 pub enum Error {
     IoError(io::Error),
     FormatError(fmt::Error),
-    RedscriptError(redscript::error::Error),
 }
 
 impl From<io::Error> for Error {
