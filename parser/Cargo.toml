@@ -9,3 +9,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 peg = "0.7"
+
+[features]
+trace = ["peg/trace"]

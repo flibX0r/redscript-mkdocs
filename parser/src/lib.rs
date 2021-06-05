@@ -19,6 +19,17 @@ peg::parser! {
     grammar redscript() for str {
         use peg::ParseLiteral;
 
+        rule traced<T>(e: rule<T>) -> T =
+            &(input:$([_]*) {
+                #[cfg(feature = "trace")]
+                println!("[PEG_INPUT_START]\n{}\n[PEG_TRACE_START]", input);
+            })
+            e:e()? {?
+                #[cfg(feature = "trace")]
+                println!("[PEG_TRACE_STOP]");
+                e.ok_or("")
+            }
+
         // Any amount of whitespace
         rule _() = quiet!{ ([' ' | '\n' | '\r' | '\t'])* }
         rule space_sep<T>(r: rule<T>) -> Vec<T> = v:(r() ** _)          { v }
@@ -116,7 +127,7 @@ peg::parser! {
             / keyword("static")     { FieldQualifier::Static }
 
 
-        rule scalar_type() -> ScalarType
+        pub rule scalar_type() -> ScalarType
             = keyword("Void")       { ScalarType::Void }
             / keyword("Variant")    { ScalarType::Variant }
             / keyword("Bool")       { ScalarType::Bool }
@@ -132,21 +143,22 @@ peg::parser! {
             / keyword("TweakDBID")  { ScalarType::TweakDBID }
 
 
-        rule type_args() -> TypeDeclaration
+        pub rule type_args() -> TypeDeclaration
             = "<" _ t:type_() _ ">" { t }
-        rule type_() -> TypeDeclaration
-            = scalar:scalar_type()
-                { TypeDeclaration::leaf(VariableType::Scalar(scalar)) }
-            / object:ident()
-                { TypeDeclaration::leaf(VariableType::Compound(object)) }
-            / keyword("array") t:type_args()
-                { TypeDeclaration::node(VariableType::Container(ContainerType::Array), t) }
-            / keyword("ref") t:type_args()
-                { TypeDeclaration::node(VariableType::Container(ContainerType::Ref), t) }
-            / keyword("wref") t:type_args()
-                { TypeDeclaration::node(VariableType::Container(ContainerType::WeakRef), t) }
-            / keyword("script_ref") t:type_args()
-                { TypeDeclaration::node(VariableType::Container(ContainerType::ScriptRef), t) }
+
+        pub rule type_() -> TypeDeclaration
+            = scal:scalar_type()
+                { TypeDeclaration::leaf(VariableType::Scalar(scal)) }
+            / comp:ident()
+                { TypeDeclaration::leaf(VariableType::Compound(comp)) }
+            / keyword("array") targ:type_args()
+                { TypeDeclaration::node(VariableType::Container(ContainerType::Array), targ) }
+            / keyword("ref") targ:type_args()
+                { TypeDeclaration::node(VariableType::Container(ContainerType::Ref), targ) }
+            / keyword("wref") targ:type_args()
+                { TypeDeclaration::node(VariableType::Container(ContainerType::WeakRef), targ) }
+            / keyword("script_ref") targ:type_args()
+                { TypeDeclaration::node(VariableType::Container(ContainerType::ScriptRef), targ) }
         
 
         rule field_type() -> TypeDeclaration 
@@ -182,6 +194,9 @@ peg::parser! {
             _ "(" _ params:comma_sep(<param()>) _ ")"
             _ returns:func_type()
             { FuncDefinition{ comments, annotations, visibility, qualifiers, name, params, returns } }
+
+        pub rule field_traced() -> FieldDefinition = traced(<field()>)
+        pub rule type_traced() -> TypeDeclaration = traced(<type_()>)
     }
 }
 
@@ -229,7 +244,7 @@ No whitespace at end*/").unwrap();
 
     #[test]
     fn parse_field_uncommented() {
-        let field = redscript::field("private static const let m_field: Int32;").unwrap();
+        let field = redscript::field_traced("private static const let m_field: Int32;").unwrap();
 
         assert_eq!(
             format!("{:?}", field),
@@ -244,18 +259,26 @@ No whitespace at end*/").unwrap();
         );
     }
 
+    #[test]
+    fn parse_type_args() {
+        let scalar = redscript::type_traced("array<CName> butts").unwrap();
+        assert_eq!(
+            format!("{:?}", scalar),
+            format!("{:?}", TypeDeclaration::leaf(VariableType::Scalar(ScalarType::CName)))
+        )
+    }
 
     #[test]
     fn parse_field_commented() {
-        let field = redscript::field(
-            "/**
+        let field = redscript::field_traced(
+            r#"/**
               * This field has several comments
               * with a bunch of whitespace
               * and **MARKDOWN** content
               *   - Like this list item
               */
             @addField(GameObject)
-            protected native final let m_names: array<CName>;").unwrap();
+            protected native final let m_names: array<CName>;"#).unwrap();
 
         assert_eq!(
             format!("{:?}", field),
@@ -274,7 +297,7 @@ No whitespace at end*/").unwrap();
                 name: Ident::new("m_names".to_string()),
                 type_: TypeDeclaration::node(
                     VariableType::Container(ContainerType::Array),
-                    TypeDeclaration::leaf(VariableType::Scalar(ScalarType::I32))
+                    TypeDeclaration::leaf(VariableType::Scalar(ScalarType::CName))
                 )
             })
         );
